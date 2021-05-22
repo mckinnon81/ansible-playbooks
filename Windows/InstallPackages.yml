@@ -1,0 +1,50 @@
+---
+# Ansible playbook to run Windows Update and restart, if required
+#
+# http://docs.ansible.com/ansible/win_updates_module.html
+# https://docs.ansible.com/ansible/win_reboot_module.html
+
+- hosts: workstations, win7
+  tasks:
+    - set_fact:
+          choco_package:
+            - 7zip
+            - adoptopenjdk
+            - ccleaner
+            - dotnetcore
+            - googlechrome
+            - greenshot
+            - notepad2-mod
+            - notepadplusplus
+            - pdftkbuilder
+            - slack
+            - sysinternals
+            - vcredist-all
+            - anydesk.install
+            - foxitreader
+
+  gather_facts: true
+
+  tasks:
+    - name: Check Public chocolatey source
+      win_chocolatey_source:
+        name: chocolatey
+        state: present
+
+- hosts: workstations
+    - name: Install chocolatey packages
+      win_chocolatey:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ choco_package }}"
+
+- hosts: workstations
+    - name: Upgrade installed packages
+      win_chocolatey:
+        name: all
+        state: latest
+
+    # reboot only if required
+    - name: Rebooting
+      win_reboot:
+        reboot_timeout: 900

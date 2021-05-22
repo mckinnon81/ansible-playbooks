@@ -1,0 +1,46 @@
+---
+- name: Windows Setup
+  hosts: windows
+  gather_facts: true
+  tasks:
+    - name: Get Licence Details
+      community.windows.win_product_facts:
+    - name: Disable KMS Phone Home
+      win_regedit:
+        path: HKLM:\Software\Policies\Microsoft\Windows NT\CurrentVersion\Software Protection Platform
+        name: NoGenTicket
+        data: 1
+        type: dword
+    - name: Activate Windows
+      win_shell: |
+        cscript.exe C:\WINDOWS\SYSTEM32\slmgr.vbs /upk
+        cscript.exe C:\WINDOWS\SYSTEM32\slmgr.vbs /ipk W269N-WFGWX-YVC9B-4J6C9-T83GX
+        cscript.exe C:\WINDOWS\SYSTEM32\slmgr.vbs /skms kms.home
+        cscript.exe C:\WINDOWS\SYSTEM32\slmgr.vbs /ato
+      when: ansible_os_license_status != "Licensed"
+    - name: Running Windows Update
+      win_updates:
+        category_names: ['SecurityUpdates','CriticalUpdates','UpdateRollups', 'Updates', 'DefinitionUpdates', 'Upgrades']
+      register: result
+    # reboot only if required
+    - win_reboot:
+        reboot_timeout: 900
+      when: result.reboot_required
+    - name: Checking for Win10 Initial Setup script
+      win_stat:
+        path:  C:\temp\Win10-Initial-Setup-Script
+      register:  stat_folder
+    - name: Copy Win10 Initial Setup script
+      win_copy:
+        src: Win10-Initial-Setup-Script
+        dest: C:\temp
+      when: stat_folder.stat.exists != True
+    - name: Run Win10 Initial Setup script
+      win_command: |
+        powershell -NoProfile -ExecutionPolicy Bypass -File "C:\temp\Win10-Initial-Setup-Script\Win10.ps1" -include "C:\temp\Win10-Initial-Setup-Script\Win10.psm1" -preset "C:\temp\Win10-Initial-Setup-Script\Default.preset" -log C:\Win10-Initial-Setup-Script.log
+      when: stat_folder.stat.exists != True
+    - name: Install chocolatey packages
+      win_chocolatey:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ choco_package }}"

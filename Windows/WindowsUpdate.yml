@@ -1,0 +1,26 @@
+---
+# Ansible playbook to run Windows Update and restart, if required
+#
+# http://docs.ansible.com/ansible/win_updates_module.html
+# https://docs.ansible.com/ansible/win_reboot_module.html
+
+- name:  Windows Update
+  hosts: dcs
+  gather_facts: true
+  tasks:
+    - name: Running Windows Update
+      win_updates:
+        category_names: ['SecurityUpdates','CriticalUpdates','UpdateRollups', 'Updates', 'DefinitionUpdates', 'Upgrades']
+      register: result
+
+    # output results
+    #- debug: var=result
+
+    # reboot only if required
+    - win_reboot:
+        reboot_timeout: 900
+      when: result.reboot_required
+
+    - name: Update WSUS
+      win_shell: |
+          $updateSession = new-object -com "Microsoft.Update.Session"; $updates=$updateSession.CreateupdateSearcher().Search($criteria).Updates; wuauclt /reportnow

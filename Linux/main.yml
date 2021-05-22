@@ -1,0 +1,49 @@
+---
+- name: Setup Host System
+  hosts: all
+  become: yes
+  tasks:
+    - name: Update and upgrade packages
+      apt:
+        name: "*"
+        state: latest
+        update_cache: yes
+        force_apt_get: yes
+      when: ansible_distribution == "Debian"
+    - name: Install all the packages
+      apt:
+        name: "{{ item }}"
+        state: latest
+      with_items:
+         - git
+         - vim
+         - zsh
+         - curl
+         - apt-transport-https
+         - build-essential
+         - "linux-headers-{{ ansible_kernel }}"
+         - dnsutils
+         - net-tools
+         - psmisc
+
+      
+- name: Setup User
+  hosts: all
+  become: no
+  vars:
+    the_user: "{{ ansible_user_id }}"
+  tasks:
+    - name: change user shell to zsh 
+      become: yes
+      user:
+        name: "{{ the_user }}"
+        shell: /bin/zsh
+    - name: Checkout dotfiles
+      git:
+        repo: https://github.com/mckinnon81/dotfiles.git
+        dest: /home/{{ the_user }}/dotfiles
+        update: yes
+    - name: Install dotfiles
+      make:
+        chdir: /home/{{ the_user }}/dotfiles
+        target: installzsh

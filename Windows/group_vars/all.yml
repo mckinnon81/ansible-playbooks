@@ -1,0 +1,21 @@
+---
+ansible_user: user
+ansible_password: password
+ansible_connection: winrm
+ansible_port: 5985
+ansible_winrm_transport: ntlm
+ansible_winrm_server_cert_validation: ignore
+choco_package:
+  - 7zip
+  - adoptopenjdk
+  - ccleaner
+  - dotnetcore
+  - googlechrome
+  - greenshot
+  - notepad2-mod
+  - notepadplusplus
+  - pdftkbuilder
+  - slack
+  - sysinternals
+  - anydesk.install
+  - foxitreader

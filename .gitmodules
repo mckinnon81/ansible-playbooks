@@ -1,0 +1,4 @@
+[submodule "Windows/Win10-Initial-Setup-Script"]
+	path = Windows/Win10-Initial-Setup-Script
+	url = https://github.com/mckinnon81/Win10-Initial-Setup-Script.git
+	branch = master
